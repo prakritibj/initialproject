@@ -1,6 +1,5 @@
 const UserServices = require("./services.user")
 
-
 const jwttoken = require("jsonwebtoken")
 require('dotenv').config()
 console.log(process.env.TOKEN_SECRET)
@@ -8,6 +7,9 @@ console.log(process.env.TOKEN_SECRET)
 const userController = {};
 userController.registerUser = async (req, res) => {
     const { name, email, password, confirmPassword } = req.body;
+    if (password !== confirmPassword) {
+        return res.send({ status: "err", msg: "do not match password" })
+    }
     if (!name || !email || !password || !confirmPassword) {
         return res.send({
             satus: "ERR",
@@ -15,6 +17,9 @@ userController.registerUser = async (req, res) => {
             data: null,
         })
     }
+
+
+    // repated email existance
 
     const { data } = await UserServices.getUserByEmail(email)
     console.log(data)
@@ -28,7 +33,6 @@ userController.registerUser = async (req, res) => {
             name,
             email,
             password,
-            confirmPassword
         });
         return res.send({
             status: "OK ",
@@ -43,41 +47,6 @@ userController.registerUser = async (req, res) => {
         });
     }
 };
-
-// our
-// userController.loginUser = async (req, res)=>{
-
-//   // const user = await  UserServices.findUserByEmailAndPassword(email, password)
-
-//   // if(user){
-
-//   //   var token =jwttoken.sign({_id : user._id}, process.env.TOKEN_SECRET);
-
-
-//   //   res.send({status : "OK", msg:"login successfully", data :token})
-//   // }else{
-//     //   res.send({status : "ERR", msg:"Invalid email or password", data : null})
-//     //   console.log("fgg")
-//     // }
-
-//     try{
-//       const {email, password} = req.body
-
-//       const user = await  UserServices.findUserByEmailAndPassword(email, password)
-
-
-
-//     var token =jwttoken.sign({_id : user._id}, process.env.TOKEN_SECRET);
-
-
-//     res.send({status : "OK", msg:"login successfully", data :token})
-
-//   }catch(err){
-//     res.send({status : "ERR", msg:"Invalid email or password", data : null})
-//     console.log(err)
-//   }
-
-// }
 
 // as structured
 userController.loginUser = async (req, res) => {
@@ -117,28 +86,15 @@ userController.loginUser = async (req, res) => {
     }
 }
 
-userController.getUserByEmail = async (req,res) => {
-    const { email } = req.body
-    try {
-        const user = await UserServices.findUserByEmail(email)
-         if(!user){
-            return res.send({ msg: "user not found", data:null, status: false })
-         }
-        return  res.send({ status: "OK", data: user, error: null })
-    } catch (err) {
-        console.log(err)
-        return res.send({ status: "ERR", data: [], error: err })
-    }
-}
 
 // find all users
-userController.getAllusers= async (req,res) => {
+userController.getAllusers = async (req, res) => {
     try {
         const getAllusers = await UserServices.findAllusers()
-        if(getAllusers.length){
-             return  res.send({ status: "OK", data: getAllusers, error: null })
+        if (getAllusers.length) {
+            return res.send({ status: "OK", data: getAllusers, error: null })
         }
-        return res.send({ msg: "user not found", data:null, status: false })
+        return res.send({ msg: "user not found", data: null, status: false })
     } catch (err) {
         console.log(err)
         return res.send({ status: "ERR", data: [], error: err })
@@ -149,44 +105,95 @@ userController.getAllusers= async (req,res) => {
 userController.deleteUser = async (req, res) => {
     const { id } = req.params
     try {
-        const deletedUser = await UserServices.findDelete(id,{$set:{  isDeleted  : true}})
+        const deletedUser = await UserServices.findDelete(id, { $set: { isDeleted: true } })
 
-    if(deletedUser === null){
-        return res.send({msg: "data not found", data : null})
-    }
-    return res.send({ msg :"data deleted successfully", data: deletedUser, error: null })
-      } catch (err) {
+        if (deletedUser === null) {
+            return res.send({ msg: "data not found", data: null })
+        }
+        return res.send({ msg: "data deleted successfully", data: deletedUser, error: null })
+    } catch (err) {
         console.error(err)
-        return res.send({ status: "ERR",msg:"data not deleted", error: err.message })
+        return res.send({ status: "ERR", msg: "data not deleted", error: err.message })
     }
-       
+
 };
 
 // update
-userController.updateduserRoute = async (req,res)=>{
-      const {id} = req.params
-      const {name,email,password} = req.body
-      try{
-        const updateuser = await UserServices.updateUser(id,{name,email,password})
-  if(!name || !email || !password){
-    return res.send({
-        satus: "ERR",
-        msg: "name,email,password are not returned",
-        data: null,
-    })
-  }
-  return res.send({ msg :"user updated successfully", data: updateuser, error: null })
+userController.updateduserRoute = async (req, res) => {
+    const { id } = req.params
+    const { name, email } = req.body
+    try {
+        const updateuser = await UserServices.updateUser(id, { name, email })
+        if (!name || !email) {
+            return res.send({
+                satus: "ERR",
+                msg: "name,email,password are not returned",
+                data: null,
+            })
+        }
+        return res.send({ msg: "user updated successfully", data: updateuser, error: null })
 
-      }catch(err){
+    } catch (err) {
         console.error(err)
-        return res.send({ status: "ERR",msg:"user not updated"})
-      }
+        return res.send({ status: "ERR", msg: "user not updated" })
+    }
 
 }
 
+userController.updatepasswordroutes = async (req, res) => {
+
+    try {
+
+        const { currentPassword, newPassword, confirmPassword } = req.body
+        const { id } = req.params
 
 
- 
+        if(req._id !== id){
+            return res.send({ status: "Err", msg: "you are not authorised for this", data: null })
+
+        }
+        // const updateuserpass = await UserServices.updatepassword(id, {currentPassword,newPassword,confirmPassword})
+        if (!currentPassword || !newPassword || !confirmPassword) {
+            return res.send({
+                satus: "ERR",
+                msg: "currentPassword,newPassword,confirmPassword are required",
+                data: null,
+            })
+        }
+
+        const user = await UserServices.getUserById(id)
+        console.log(user, "uer")
+        if (!user) {
+            return res.send({ status: "Err", msg: "user not found", data: null })
+        }
+
+        const verifyPass = await UserServices.verifyCurrentPassword(user, currentPassword)
+        console.log(currentPassword,"current")
+
+
+        console.log(verifyPass, "ber")
+        if (!verifyPass) {
+            return res.send({ status: "Err", msg: "currnt password is incorrect", data: null })
+        }
+
+        if (newPassword != confirmPassword) {
+            return res.send({ status: "Err", msg: "new password and confirm password do not matched", data: null })
+
+        }
+
+        const hashPassword = await UserServices.hashPassword(newPassword)
+        const updatePassword = await UserServices.updatePassword(id, hashPassword)
+
+        if (updatePassword) {
+            return res.send({ msg: "currentPassword,newPassword,confirmPassword updated successfully", data: updatePassword, error: null })
+        }
+
+    } catch (err) {
+        console.error(err, "errr")
+        return res.send({ status: "ERR", msg: "password is not updated" })
+    }
+
+}
 
 
 
