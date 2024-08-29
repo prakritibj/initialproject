@@ -1,5 +1,6 @@
 const UserServices = require("./services.user")
 
+
 const jwttoken = require("jsonwebtoken")
 require('dotenv').config()
 console.log(process.env.TOKEN_SECRET)
@@ -144,7 +145,7 @@ userController.getAllusers= async (req,res) => {
     }
 
 }
-
+// deleteuser as inactive
 userController.deleteUser = async (req, res) => {
     const { id } = req.params
     try {
@@ -158,16 +159,30 @@ userController.deleteUser = async (req, res) => {
         console.error(err)
         return res.send({ status: "ERR",msg:"data not deleted", error: err.message })
     }
-        // if (!deletedUser) {
-        //     return res.send({ msg: "User not found", data: null, status: false })
-        // }
-
-        // return res.send({ status: "OK", data: deletedUser, error: null })
-    // } catch (err) {
-    //     console.error(err)
-    //     return res.send({ status: "ERR", data: [], error: err.message })
-    // }
+       
 };
+
+// update
+userController.updateduserRoute = async (req,res)=>{
+      const {id} = req.params
+      const {name,email,password} = req.body
+      try{
+        const updateuser = await UserServices.updateUser(id,{name,email,password})
+  if(!name || !email || !password){
+    return res.send({
+        satus: "ERR",
+        msg: "name,email,password are not returned",
+        data: null,
+    })
+  }
+  return res.send({ msg :"user updated successfully", data: updateuser, error: null })
+
+      }catch(err){
+        console.error(err)
+        return res.send({ status: "ERR",msg:"user not updated"})
+      }
+
+}
 
 
 

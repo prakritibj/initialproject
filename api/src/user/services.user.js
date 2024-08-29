@@ -92,10 +92,15 @@ UserServices.findAllusers = async()=>{
 }
 
 
-
+// deleted as inactive
 UserServices.findDelete = async(id,updateFeild)=>{
     return User.findByIdAndUpdate({ _id :id},{...updateFeild},{new: true})
 }
 
+// update api
+UserServices.updateUser = async(id,{name,email,password})=>{
+    const hash = bcrypt.hashSync(password,10)
+    return User.findByIdAndUpdate({ _id :id},{name,email ,password : hash})
+}
 
 module.exports = UserServices;
