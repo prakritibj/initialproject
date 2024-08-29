@@ -83,8 +83,19 @@ UserServices.findUserByEmailAndPassword = async (email, password) => {
 
 }
 
-// UserServices.findUserByEmail = async(matchFiles)=>{
-//     return user.findOne({...matchFiles})
-// }
+UserServices.findUserByEmail = async(matchFiles)=>{
+    return User.findOne({...matchFiles})
+}
+
+UserServices.findAllusers = async()=>{
+     return User.find({})
+}
+
+
+
+UserServices.findDelete = async(id,updateFeild)=>{
+    return User.findByIdAndUpdate({ _id :id},{...updateFeild},{new: true})
+}
+
 
 module.exports = UserServices;
